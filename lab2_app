@@ -1,0 +1,105 @@
+from spyre import server
+import pickle
+import pandas as pd
+
+
+class StockExample(server.App):
+    title = 'Vegetation Data'
+
+    inputs = [{"type": 'dropdown',
+               "label": 'Index',
+               "options": [{"label": "VHI", "value": "VHI"},
+                           {"label": "TCI", "value": "TCI"},
+                           {"label": "VCI", "value": "VCI"}],
+               "key": 'index',
+               },
+              {"type": 'dropdown',
+               "label": 'Region',
+               "options": [{"label": "Вінницька область", "value": "Вінницька область"},
+                           {"label": "Волинська область", "value": "Волинська область"},
+                           {"label": "Дніпропетровська область", "value": "Дніпропетровська область"},
+                           {"label": "Донецька область", "value": "Донецька область"},
+                           {"label": "Житомирська область", "value": "Житомирська область"},
+                           {"label": "Закарпатська область", "value": "Закарпатська область"},
+                           {"label": "Запорізька область", "value": "Запорізька область"},
+                           {"label": "Івано-Франківська область", "value": "Івано-Франківська область"},
+                           {"label": "Київська область", "value": "Київська область"},
+                           {"label": "Кіровоградська область", "value": "Кіровоградська область"},
+                           {"label": "Луганська область", "value": "Луганська область"},
+                           {"label": "Львівська область", "value": "Львівська область"},
+                           {"label": "Миколаївська область", "value": "Миколаївська область"},
+                           {"label": "Одеська область", "value": "Одеська область"},
+                           {"label": "Полтавська область", "value": "Полтавська область"},
+                           {"label": "Рівенська область", "value": "Рівенська область"},
+                           {"label": "Сумська область", "value": "Сумська область"},
+                           {"label": "Тернопільська область", "value": "Тернопільська область"},
+                           {"label": "Харківська область", "value": "Харківська область"},
+                           {"label": "Херсонська область", "value": "Херсонська область"},
+                           {"label": "Хмельницька область", "value": "Хмельницька область"},
+                           {"label": "Черкаська область", "value": "Черкаська область"},
+                           {"label": "Чернівецька область", "value": "Чернівецька область"},
+                           {"label": "Чернігівська область", "value": "Чернігівська область"},
+                           {"label": "Республіка Крим", "value": "Республіка Крим"}],
+               "key": 'region',
+               },
+              {
+                  "type": 'text',
+                  "label": 'Weeks more than',
+                  "value": '1',
+                  "key": 'week1',
+                  "action_id": "reload"
+              },
+              {
+                  "type": 'text',
+                  "label": 'Weeks less than',
+                  "value": '53',
+                  "key": 'week2',
+                  "action_id": "reload",
+              }
+              ]
+
+    controls = [{"type": "hidden",
+                 "id": "update_data"},
+                {"type": "button",
+                 "label": "reload",
+                 "id": "update_data"}]
+
+    tabs = ["Table", "Plot"]
+
+    outputs = [{"type": "table",
+                "id": "table_id",
+                "control_id": "update_data",
+                "tab": "Table",
+                "on_page_load": False,
+                "sortable": True},
+               {
+                   "type": "plot",
+                   "id": "plot1",
+                   "control_id": "update_data",
+                   "tab": "Plot",
+                   "on_page_load": False},
+               ]
+
+    def getData(self, params):
+        index = str(params['index'])
+        region = str(params['region'])
+        week_more = float(params['week1'])
+        week_less = float(params['week2'])
+        with open('pickledata.p', 'rb') as file:
+            df1 = pickle.load(file)
+        df = df1[['Year', 'Week', 'Region', 'SMN', 'SMT', f'{index}']]
+        self.df = df.loc[(df['Region'] == f'{region}') & (df['Week'] > week_more) & (df['Week'] < week_less)]
+        print("df finished")
+        return self.df
+
+    def getPlot(self, params):
+        index = str(params['index'])
+        df = self.getData(params)
+        df1 = df[['Year', 'Region', f'{index}']]
+        fig = df1.set_index('Year').plot()
+        return fig
+
+
+
+app = StockExample()
+app.launch(port=9006)
